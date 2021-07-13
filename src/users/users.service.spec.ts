@@ -2,7 +2,7 @@ import { Test } from '@Nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from 'src/jwt/jwt.service';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 import { UsersService } from './users.service';
 
 const mockRepository = () => ({
@@ -53,7 +53,7 @@ describe('UserService', () => {
     const createAccountArgs = {
       email: 'altair@list.ru',
       password: '123',
-      role: 0,
+      role: UserRole.Administrator,
     };
 
     it('should fail if user exist', async () => {
