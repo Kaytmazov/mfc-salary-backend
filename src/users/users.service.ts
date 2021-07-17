@@ -10,6 +10,7 @@ import { User } from './entities/user.entity';
 import { JwtService } from 'src/jwt/jwt.service';
 import { EditAccountInput, EditAccountOutput } from './dtos/edit-account.dto';
 import { UserAccountOutput } from './dtos/user-account.dto';
+import { AllUsersOutput } from './dtos/all-users.dto';
 
 Injectable();
 export class UsersService {
@@ -76,7 +77,22 @@ export class UsersService {
     }
   }
 
-  async findById(id: number): Promise<UserAccountOutput> {
+  async allUsers(): Promise<AllUsersOutput> {
+    try {
+      const users = await this.users.find();
+      return {
+        ok: true,
+        users,
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: 'Не удалось выполнить поиск',
+      };
+    }
+  }
+
+  async findById(id: string): Promise<UserAccountOutput> {
     try {
       const user = await this.users.findOneOrFail({ id });
 
@@ -93,7 +109,7 @@ export class UsersService {
   }
 
   async editAccount(
-    userId: number,
+    userId: string,
     { email, password }: EditAccountInput,
   ): Promise<EditAccountOutput> {
     try {

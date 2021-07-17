@@ -4,8 +4,8 @@ import { User } from '../entities/user.entity';
 
 @ArgsType()
 export class UserAccountInput {
-  @Field(() => Number)
-  userId: number;
+  @Field(() => String)
+  userId: string;
 }
 
 @ObjectType()

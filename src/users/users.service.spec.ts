@@ -58,7 +58,7 @@ describe('UserService', () => {
 
     it('should fail if user exist', async () => {
       usersRepository.findOne.mockResolvedValue({
-        id: 1,
+        id: 'testId',
         email: 'altair@list.ru',
       });
 
@@ -128,7 +128,7 @@ describe('UserService', () => {
 
     it('should return token if password correct', async () => {
       usersRepository.findOne.mockResolvedValue({
-        id: 1,
+        id: 'testId',
         checkPassword: jest.fn(() => Promise.resolve(true)),
       });
 
@@ -155,18 +155,18 @@ describe('UserService', () => {
 
   describe('findById', () => {
     const findByIdArgs = {
-      id: 1,
+      id: 'testId',
     };
 
     it('should find an existing user', async () => {
       usersRepository.findOneOrFail.mockResolvedValue(findByIdArgs);
-      const result = await service.findById(1);
+      const result = await service.findById(findByIdArgs.id);
       expect(result).toEqual({ ok: true, user: findByIdArgs });
     });
 
     it('should fail if no user is found', async () => {
       usersRepository.findOneOrFail.mockRejectedValue(new Error());
-      const result = await service.findById(1);
+      const result = await service.findById(findByIdArgs.id);
       expect(result).toEqual({
         ok: false,
         error: 'Пользователь не найден',
@@ -177,7 +177,7 @@ describe('UserService', () => {
   describe('editAccount', () => {
     it('should change email', async () => {
       const editAccountArgs = {
-        userId: 1,
+        userId: 'testId',
         input: {
           email: 'newaltair@list.ru',
         },
@@ -213,7 +213,7 @@ describe('UserService', () => {
 
     it('should fail if email busy', async () => {
       const editAccountArgs = {
-        userId: 1,
+        userId: 'testId',
         input: {
           email: 'existing@email.ru',
         },
@@ -244,7 +244,7 @@ describe('UserService', () => {
 
     it('should change password', async () => {
       const editAccountArgs = {
-        userId: 1,
+        userId: 'testId',
         input: {
           password: 'new-password',
         },
@@ -275,7 +275,9 @@ describe('UserService', () => {
 
     it('should fail on exception', async () => {
       usersRepository.findOne.mockRejectedValue(new Error());
-      const result = await service.editAccount(1, { email: 'altair@list.ru' });
+      const result = await service.editAccount('testId', {
+        email: 'altair@list.ru',
+      });
       expect(result).toEqual({
         ok: false,
         error: 'Не удалось обновить данные',

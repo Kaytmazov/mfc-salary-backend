@@ -1,4 +1,8 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import {
+  Injectable,
+  NestMiddleware,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Response, Request, NextFunction } from 'express';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from './jwt.service';
@@ -11,8 +15,8 @@ export class JwtMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    if ('x-jwt' in req.headers) {
-      const token = req.headers['x-jwt'];
+    if ('authorization' in req.headers) {
+      const token = req.headers['authorization'];
       try {
         const decoded = this.jwtService.verify(token.toString());
 
@@ -23,7 +27,9 @@ export class JwtMiddleware implements NestMiddleware {
             req['user'] = user;
           }
         }
-      } catch (e) {}
+      } catch {
+        throw new UnauthorizedException();
+      }
     }
     next();
   }

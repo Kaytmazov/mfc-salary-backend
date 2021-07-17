@@ -3,7 +3,7 @@ import * as jwt from 'jsonwebtoken';
 import { CONFIG_OPTIONS } from 'src/common/common.constants';
 import { JwtService } from './jwt.service';
 
-const USER_ID = 1;
+const USER_ID = 'testId';
 const TEST_KEY = 'testKey';
 const TOKEN = 'TOKEN';
 
