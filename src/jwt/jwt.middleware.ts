@@ -4,14 +4,14 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Response, Request, NextFunction } from 'express';
-import { UsersService } from 'src/users/users.service';
+import { EmployeesService } from 'src/employees/employees.service';
 import { JwtService } from './jwt.service';
 
 @Injectable()
 export class JwtMiddleware implements NestMiddleware {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly userService: UsersService,
+    private readonly employeeService: EmployeesService,
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
@@ -21,13 +21,16 @@ export class JwtMiddleware implements NestMiddleware {
         const decoded = this.jwtService.verify(token.toString());
 
         if (typeof decoded === 'object' && decoded.hasOwnProperty('id')) {
-          const { user, ok } = await this.userService.findById(decoded['id']);
+          const { employee, ok } = await this.employeeService.findById(
+            decoded['id'],
+          );
 
           if (ok) {
-            req['user'] = user;
+            req['user'] = employee;
           }
         }
       } catch {
+        console.log('========= catch');
         throw new UnauthorizedException();
       }
     }

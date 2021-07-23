@@ -8,11 +8,13 @@ import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as Joi from 'joi';
-import { UsersModule } from './users/users.module';
-import { User } from './users/entities/user.entity';
 import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
 import { AuthModule } from './auth/auth.module';
+import { EmployeesModule } from './employees/employees.module';
+import { Employee } from './employees/entities/employee.entity';
+import { EmployeeRole } from './employees/entities/role.entity';
+import { EmployeeOffice } from './employees/entities/employee-office.entity';
 
 @Module({
   imports: [
@@ -37,10 +39,11 @@ import { AuthModule } from './auth/auth.module';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      synchronize: process.env.NODE_ENV !== 'prod',
+      // synchronize: process.env.NODE_ENV !== 'prod',
+      synchronize: false,
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [User],
+      entities: [Employee, EmployeeOffice, EmployeeRole],
     }),
     GraphQLModule.forRoot({
       autoSchemaFile: true,
@@ -50,7 +53,7 @@ import { AuthModule } from './auth/auth.module';
       privateKey: process.env.PRIVATE_KEY,
     }),
     AuthModule,
-    UsersModule,
+    EmployeesModule,
   ],
   controllers: [],
   providers: [],
