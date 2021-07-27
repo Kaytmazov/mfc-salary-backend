@@ -6,15 +6,13 @@ import {
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import * as Joi from 'joi';
 import { JwtModule } from './jwt/jwt.module';
 import { JwtMiddleware } from './jwt/jwt.middleware';
 import { AuthModule } from './auth/auth.module';
 import { EmployeesModule } from './employees/employees.module';
-import { Employee } from './employees/entities/employee.entity';
-import { EmployeeRole } from './employees/entities/role.entity';
-import { EmployeeOffice } from './employees/entities/employee-office.entity';
+import { PrismaModule } from './prisma/prisma.module';
+import { ReportSalaryTotalModule } from './report-salary-total/report-salary-total.module';
 
 @Module({
   imports: [
@@ -32,28 +30,23 @@ import { EmployeeOffice } from './employees/entities/employee-office.entity';
         PRIVATE_KEY: Joi.string().required(),
       }),
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: +process.env.DB_PORT,
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME,
-      // synchronize: process.env.NODE_ENV !== 'prod',
-      synchronize: false,
-      logging:
-        process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [Employee, EmployeeOffice, EmployeeRole],
-    }),
     GraphQLModule.forRoot({
+      playground: process.env.NODE_ENV !== 'prod',
       autoSchemaFile: true,
-      context: ({ req }) => ({ user: req['user'] }),
+      context: ({ req, connection }) => {
+        const TOKEN_KEY = 'authorization';
+        return {
+          token: req ? req.headers[TOKEN_KEY] : connection.context[TOKEN_KEY],
+        };
+      },
     }),
     JwtModule.forRoot({
       privateKey: process.env.PRIVATE_KEY,
     }),
     AuthModule,
     EmployeesModule,
+    PrismaModule,
+    ReportSalaryTotalModule,
   ],
   controllers: [],
   providers: [],
