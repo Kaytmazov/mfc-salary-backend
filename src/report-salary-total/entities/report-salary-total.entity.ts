@@ -1,4 +1,5 @@
 import { Field, ObjectType } from '@nestjs/graphql';
+import { Decimal } from '@prisma/client/runtime';
 
 @ObjectType()
 export class ReportSalaryTotal {
@@ -18,20 +19,23 @@ export class ReportSalaryTotal {
   countDaysPeriod: number;
 
   @Field(() => Number)
-  salary: number;
+  salary: Decimal;
 
   @Field(() => Number)
-  rate: number;
+  rate: Decimal;
 
   @Field(() => Number)
-  stepPremium: number;
+  stepPremium: Decimal;
 
   @Field(() => Number)
-  stepPremiumOther: number;
+  stepPremiumOther: Decimal;
 
   @Field(() => Number)
-  fineSum: number;
+  premium: Decimal;
 
   @Field(() => Number)
-  premiumTotal: number;
+  fineSum: Decimal;
+
+  @Field(() => Number)
+  premiumTotal: Decimal;
 }

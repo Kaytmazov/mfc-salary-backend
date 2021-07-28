@@ -1,52 +1,106 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import {
+  ReportSalaryTotalInput,
+  ReportSalaryTotalOutput,
+} from './dtos/report-salary-total.dto';
 
 @Injectable()
 export class ReportSalaryTotalService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSalaryReport() {
+  async getSalaryReport({
+    officeId,
+    month,
+    year,
+  }: ReportSalaryTotalInput): Promise<ReportSalaryTotalOutput> {
     try {
-      const data = await this.prisma.archive_premium.findMany({
-        take: 20,
-        select: {
-          id: true,
-          employees_fio: true,
-          employees_job_pos_name: true,
-          type_: true,
-          period_count_day: true,
+      const report = await this.prisma.archive_premium.groupBy({
+        by: [
+          'spr_employees_id',
+          'employees_fio',
+          'employees_job_pos_name',
+          'type_',
+          'period_count_day',
+          'employees_stake',
+        ],
+        where: {
+          spr_employees_mfc_id: officeId,
+          period_month: month,
+          period_year: year,
+        },
+        _sum: {
           employees_salary: true,
-          employees_stake: true,
           step_premium: true,
           step_premium_other: true,
+          employees_premium: true,
           fine_sum: true,
           employees_premium_total: true,
         },
       });
 
-      const report = data.map(
+      // const data1 = await this.prisma.archive_premium.aggregate({
+      //   where: {
+      //     spr_employees_mfc_id: 'd802c865-c08f-4ad4-a926-ce770287a47b',
+      //     period_month: 12,
+      //     period_year: 2020,
+      //   },
+      //   _sum: {
+      //     employees_premium_total: true,
+      //   },
+      // });
+
+      // const data = await this.prisma.archive_premium.findMany({
+      //   where: {
+      //     spr_employees_mfc_id: 'd802c865-c08f-4ad4-a926-ce770287a47b',
+      //     period_month: 12,
+      //     period_year: 2020,
+      //   },
+      //   select: {
+      //     id: true,
+      //     spr_employees_id: true,
+      //     employees_fio: true,
+      //     employees_job_pos_name: true,
+      //     type_: true,
+      //     period_count_day: true,
+      //     employees_salary: true,
+      //     employees_stake: true,
+      //     step_premium: true,
+      //     step_premium_other: true,
+      //     employees_premium: true,
+      //     fine_sum: true,
+      //     employees_premium_total: true,
+      //   },
+      //   take: 20,
+      // });
+
+      const data = report.map(
         ({
-          id,
+          spr_employees_id,
           employees_fio,
           employees_job_pos_name,
           type_,
           period_count_day,
-          employees_salary,
           employees_stake,
-          step_premium,
-          step_premium_other,
-          fine_sum,
-          employees_premium_total,
+          _sum: {
+            employees_salary,
+            step_premium,
+            step_premium_other,
+            employees_premium,
+            fine_sum,
+            employees_premium_total,
+          },
         }) => ({
-          id,
+          id: spr_employees_id,
           fio: employees_fio,
           jobPosition: employees_job_pos_name,
-          type: type_,
+          type: type_ === 1 ? 'ОСН' : 'СОВ',
           countDaysPeriod: period_count_day,
           salary: employees_salary,
           rate: employees_stake,
           stepPremium: step_premium,
           stepPremiumOther: step_premium_other,
+          premium: employees_premium,
           fineSum: fine_sum,
           premiumTotal: employees_premium_total,
         }),
@@ -54,12 +108,12 @@ export class ReportSalaryTotalService {
 
       return {
         ok: true,
-        data: report,
+        data,
       };
     } catch {
       return {
         ok: false,
-        return: 'Не удалось выполнить поиск',
+        error: 'Не удалось выполнить поиск',
       };
     }
   }

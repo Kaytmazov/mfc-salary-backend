@@ -1,6 +1,9 @@
-import { Resolver, Query } from '@nestjs/graphql';
+import { Resolver, Query, Args } from '@nestjs/graphql';
 import { Role } from 'src/auth/role.decorator';
-import { ReportSalaryTotalOutput } from './dtos/report-salary-total.dto';
+import {
+  ReportSalaryTotalInput,
+  ReportSalaryTotalOutput,
+} from './dtos/report-salary-total.dto';
 import { ReportSalaryTotal } from './entities/report-salary-total.entity';
 import { ReportSalaryTotalService } from './report-salary-total.service';
 
@@ -12,7 +15,9 @@ export class ReportSalaryTotalResolver {
 
   @Query(() => ReportSalaryTotalOutput)
   @Role(['Any'])
-  getSalaryReport() {
-    return this.reportSalaryTotalService.getSalaryReport();
+  getSalaryReport(
+    @Args() reportInput: ReportSalaryTotalInput,
+  ): Promise<ReportSalaryTotalOutput> {
+    return this.reportSalaryTotalService.getSalaryReport(reportInput);
   }
 }
