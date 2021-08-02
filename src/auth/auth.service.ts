@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { hash, compare } from 'bcrypt';
 import { JwtService } from 'src/jwt/jwt.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -11,10 +16,14 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  validatePassword(password: string, hashedPassword: string): Promise<boolean> {
+  validatePassword(password: string, hashedPassword: string) {
     // временно
-    return new Promise((resolve) => resolve(true));
-    // return compare(password, hashedPassword);
+    // const passwordValid = compare(password, hashedPassword);
+    const passwordValid = true;
+
+    if (!passwordValid) {
+      throw new BadRequestException('Неверная комбинация логина и пароля');
+    }
   }
 
   hashPassword(password: string): Promise<string> {
@@ -27,45 +36,70 @@ export class AuthService {
         where: { employee_login: login },
         select: {
           id: true,
-          employee_fio: true,
           employee_login: true,
           employee_pass: true,
+          employee_fio: true,
+          spr_employees_mfc_join: {
+            orderBy: { set_date: 'desc' },
+            select: {
+              spr_employees_mfc: {
+                select: {
+                  id: true,
+                  mfc_name: true,
+                },
+              },
+              spr_employees_job_pos: {
+                select: {
+                  job_pos_name: true,
+                },
+              },
+              spr_employees_role_join: {
+                orderBy: { set_date: 'desc' },
+                select: {
+                  spr_employees_role: {
+                    select: {
+                      role_name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       });
 
       if (!employee) {
-        return {
-          ok: false,
-          error: 'Пользователь не найден',
-        };
+        throw new NotFoundException('Пользователь не найден');
       }
 
-      const passwordValid = await this.validatePassword(
-        password,
-        employee.employee_pass,
-      );
-      if (!passwordValid) {
-        return {
-          ok: false,
-          error: 'Неверная комбинация логина и пароля',
-        };
-      }
+      this.validatePassword(password, employee.employee_pass);
+
+      const [office] = employee.spr_employees_mfc_join;
+      const jobPosition = office.spr_employees_job_pos.job_pos_name;
+      const [role] = office.spr_employees_role_join;
 
       const token = this.jwtService.sign({
         id: employee.id,
-        fio: employee.employee_fio,
-        login: employee.employee_login,
       });
 
       return {
-        ok: true,
         token,
+        user: {
+          id: employee.id,
+          login: employee.employee_login,
+          fio: employee.employee_fio,
+          office: {
+            id: office.spr_employees_mfc.id,
+            name: office.spr_employees_mfc.mfc_name,
+          },
+          jobPosition,
+          role: role.spr_employees_role.role_name,
+        },
       };
-    } catch (error) {
-      return {
-        ok: false,
-        error: 'Ошибка авторизации',
-      };
+    } catch {
+      throw new InternalServerErrorException(
+        'Не удалось выполнить запрос. Попробуйте еще раз.',
+      );
     }
   }
 }

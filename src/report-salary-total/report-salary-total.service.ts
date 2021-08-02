@@ -1,9 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { v4 as uuid } from 'uuid';
 import { PrismaService } from 'src/prisma/prisma.service';
-import {
-  ReportSalaryTotalInput,
-  ReportSalaryTotalOutput,
-} from './dtos/report-salary-total.dto';
+import { ReportSalaryTotalArgs } from './dtos/report-salary-total.dto';
+import { ReportSalaryTotal } from './entities/report-salary-total.entity';
 
 @Injectable()
 export class ReportSalaryTotalService {
@@ -13,9 +12,9 @@ export class ReportSalaryTotalService {
     officeId,
     month,
     year,
-  }: ReportSalaryTotalInput): Promise<ReportSalaryTotalOutput> {
+  }: ReportSalaryTotalArgs): Promise<ReportSalaryTotal[]> {
     try {
-      const report = await this.prisma.archive_premium.groupBy({
+      const data = await this.prisma.archive_premium.groupBy({
         by: [
           'spr_employees_id',
           'employees_fio',
@@ -37,7 +36,14 @@ export class ReportSalaryTotalService {
           fine_sum: true,
           employees_premium_total: true,
         },
+        orderBy: {
+          employees_fio: 'asc',
+        },
       });
+
+      if (!data) {
+        return [];
+      }
 
       // const data1 = await this.prisma.archive_premium.aggregate({
       //   where: {
@@ -74,7 +80,7 @@ export class ReportSalaryTotalService {
       //   take: 20,
       // });
 
-      const data = report.map(
+      const report = data.map(
         ({
           spr_employees_id,
           employees_fio,
@@ -91,7 +97,8 @@ export class ReportSalaryTotalService {
             employees_premium_total,
           },
         }) => ({
-          id: spr_employees_id,
+          id: uuid(),
+          employeeId: spr_employees_id,
           fio: employees_fio,
           jobPosition: employees_job_pos_name,
           type: type_ === 1 ? 'ОСН' : 'СОВ',
@@ -106,15 +113,11 @@ export class ReportSalaryTotalService {
         }),
       );
 
-      return {
-        ok: true,
-        data,
-      };
+      return report;
     } catch {
-      return {
-        ok: false,
-        error: 'Не удалось выполнить поиск',
-      };
+      throw new InternalServerErrorException(
+        'Не удалось выполнить запрос. Попробуйте еще раз.',
+      );
     }
   }
 }

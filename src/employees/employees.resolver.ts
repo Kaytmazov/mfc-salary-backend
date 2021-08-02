@@ -1,23 +1,22 @@
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { Role } from 'src/auth/role.decorator';
-import { AllEmployeesOutput } from './dtos/all-employees.dto';
 import { Employee } from './entities/employee.entity';
 import { EmployeesService } from './employees.service';
-import { EmployeeInput, EmployeeOutput } from './dtos/employee.dto';
+import { EmployeeArgs } from './dtos/employee.dto';
 
 @Resolver(() => Employee)
 export class EmployeesResolver {
   constructor(private readonly employeesService: EmployeesService) {}
 
-  @Query(() => EmployeeOutput)
+  @Query(() => Employee)
   @Role(['Any'])
-  employee(@Args() employeeInput: EmployeeInput): Promise<EmployeeOutput> {
-    return this.employeesService.findById(employeeInput.userId);
+  employee(@Args() { employeeId }: EmployeeArgs): Promise<Employee> {
+    return this.employeesService.findById(employeeId);
   }
 
-  @Query(() => AllEmployeesOutput)
+  @Query(() => [Employee])
   @Role(['Any'])
-  allEmployees(): Promise<AllEmployeesOutput> {
-    return this.employeesService.allEmployees();
+  allEmployees(): Promise<Employee[]> {
+    return this.employeesService.getAllEmployees();
   }
 }

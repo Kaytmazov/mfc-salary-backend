@@ -1,15 +1,7 @@
-import { ArgsType, Field, ObjectType } from '@nestjs/graphql';
-import { CoreOutput } from 'src/common/dtos/output.dto';
-import { Employee } from '../entities/employee.entity';
+import { ArgsType, Field } from '@nestjs/graphql';
 
 @ArgsType()
-export class EmployeeInput {
+export class EmployeeArgs {
   @Field(() => String)
-  userId: string;
-}
-
-@ObjectType()
-export class EmployeeOutput extends CoreOutput {
-  @Field(() => Employee, { nullable: true })
-  employee?: Employee;
+  employeeId: string;
 }

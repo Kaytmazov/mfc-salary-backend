@@ -7,6 +7,9 @@ export class ReportSalaryTotal {
   id: string;
 
   @Field(() => String)
+  employeeId: string;
+
+  @Field(() => String)
   fio: string;
 
   @Field(() => String)

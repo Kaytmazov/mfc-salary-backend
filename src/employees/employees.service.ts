@@ -1,13 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AllEmployeesOutput } from './dtos/all-employees.dto';
-import { EmployeeOutput } from './dtos/employee.dto';
+import { Employee } from './entities/employee.entity';
 
 @Injectable()
 export class EmployeesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findById(id: string): Promise<EmployeeOutput> {
+  async findById(id: string): Promise<Employee> {
     try {
       const employee = await this.prisma.spr_employees.findUnique({
         where: {
@@ -22,7 +25,13 @@ export class EmployeesService {
             select: {
               spr_employees_mfc: {
                 select: {
+                  id: true,
                   mfc_name: true,
+                },
+              },
+              spr_employees_job_pos: {
+                select: {
+                  job_pos_name: true,
                 },
               },
               spr_employees_role_join: {
@@ -40,28 +49,33 @@ export class EmployeesService {
         },
       });
 
+      if (!employee) {
+        throw new NotFoundException('Сотрудник не найден');
+      }
+
       const [office] = employee.spr_employees_mfc_join;
+      const jobPosition = office.spr_employees_job_pos.job_pos_name;
       const [role] = office.spr_employees_role_join;
 
       return {
-        ok: true,
-        employee: {
-          id: employee.id,
-          login: employee.employee_login,
-          fio: employee.employee_fio,
-          office: office.spr_employees_mfc.mfc_name,
-          role: role.spr_employees_role.role_name,
+        id: employee.id,
+        login: employee.employee_login,
+        fio: employee.employee_fio,
+        office: {
+          id: office.spr_employees_mfc.id,
+          name: office.spr_employees_mfc.mfc_name,
         },
+        jobPosition,
+        role: role.spr_employees_role.role_name,
       };
-    } catch (e) {
-      return {
-        ok: false,
-        error: 'Пользователь не найден',
-      };
+    } catch {
+      throw new InternalServerErrorException(
+        'Не удалось выполнить запрос. Попробуйте еще раз.',
+      );
     }
   }
 
-  async allEmployees(): Promise<AllEmployeesOutput> {
+  async getAllEmployees(): Promise<Employee[]> {
     try {
       const data = await this.prisma.spr_employees.findMany({
         select: {
@@ -71,21 +85,21 @@ export class EmployeesService {
         },
       });
 
+      if (!data) {
+        return [];
+      }
+
       const employees = data.map(({ id, employee_login, employee_fio }) => ({
         id,
         login: employee_login,
         fio: employee_fio,
       }));
 
-      return {
-        ok: true,
-        employees,
-      };
-    } catch (e) {
-      return {
-        ok: false,
-        error: 'Не удалось выполнить поиск',
-      };
+      return employees;
+    } catch {
+      throw new InternalServerErrorException(
+        'Не удалось выполнить запрос. Попробуйте еще раз.',
+      );
     }
   }
 }

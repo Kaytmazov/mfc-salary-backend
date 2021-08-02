@@ -1,9 +1,6 @@
 import { Resolver, Query, Args } from '@nestjs/graphql';
 import { Role } from 'src/auth/role.decorator';
-import {
-  ReportSalaryTotalInput,
-  ReportSalaryTotalOutput,
-} from './dtos/report-salary-total.dto';
+import { ReportSalaryTotalArgs } from './dtos/report-salary-total.dto';
 import { ReportSalaryTotal } from './entities/report-salary-total.entity';
 import { ReportSalaryTotalService } from './report-salary-total.service';
 
@@ -13,11 +10,11 @@ export class ReportSalaryTotalResolver {
     private readonly reportSalaryTotalService: ReportSalaryTotalService,
   ) {}
 
-  @Query(() => ReportSalaryTotalOutput)
+  @Query(() => [ReportSalaryTotal])
   @Role(['Any'])
-  getSalaryReport(
-    @Args() reportInput: ReportSalaryTotalInput,
-  ): Promise<ReportSalaryTotalOutput> {
-    return this.reportSalaryTotalService.getSalaryReport(reportInput);
+  salaryReport(
+    @Args() reportArgs: ReportSalaryTotalArgs,
+  ): Promise<ReportSalaryTotal[]> {
+    return this.reportSalaryTotalService.getSalaryReport(reportArgs);
   }
 }

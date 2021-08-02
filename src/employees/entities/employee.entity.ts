@@ -1,10 +1,5 @@
-import { Field, HideField, InputType, ObjectType } from '@nestjs/graphql';
-import { IsString } from 'class-validator';
-// import { IsString } from 'class-validator';
-// import * as bcrypt from 'bcrypt';
-// import { InternalServerErrorException } from '@nestjs/common';
-// import { EmployeeOffice } from './employee-office.entity';
-// import { EmployeeRole } from './role.entity';
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import { EmployeeOffice } from './employee-office.entity';
 
 // временно
 export enum UserRole {
@@ -45,9 +40,12 @@ export class Employee {
   @Field(() => String)
   fio: string;
 
-  @Field(() => String)
-  office?: string;
+  @Field(() => EmployeeOffice, { nullable: true })
+  office?: EmployeeOffice;
 
-  @Field(() => String)
+  @Field(() => String, { nullable: true })
+  jobPosition?: string;
+
+  @Field(() => String, { nullable: true })
   role?: string;
 }

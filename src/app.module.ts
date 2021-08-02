@@ -13,6 +13,8 @@ import { AuthModule } from './auth/auth.module';
 import { EmployeesModule } from './employees/employees.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ReportSalaryTotalModule } from './report-salary-total/report-salary-total.module';
+import { GraphQLError, GraphQLFormattedError } from 'graphql';
+import { OfficesModule } from './offices/offices.module';
 
 @Module({
   imports: [
@@ -33,6 +35,16 @@ import { ReportSalaryTotalModule } from './report-salary-total/report-salary-tot
     GraphQLModule.forRoot({
       playground: process.env.NODE_ENV !== 'prod',
       autoSchemaFile: true,
+      formatError: (error: GraphQLError) => {
+        const graphQLFormattedError: GraphQLFormattedError = {
+          message:
+            error.extensions?.exception?.response?.message || error.message,
+        };
+
+        console.log('graphQLFormattedError: ', graphQLFormattedError);
+
+        return graphQLFormattedError;
+      },
       context: ({ req, connection }) => {
         const TOKEN_KEY = 'authorization';
         return {
@@ -47,6 +59,7 @@ import { ReportSalaryTotalModule } from './report-salary-total/report-salary-tot
     EmployeesModule,
     PrismaModule,
     ReportSalaryTotalModule,
+    OfficesModule,
   ],
   controllers: [],
   providers: [],
